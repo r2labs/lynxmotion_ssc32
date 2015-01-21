@@ -414,6 +414,62 @@ void SSC32Driver::jointCallback( const ros::MessageEvent<trajectory_msgs::JointT
 
 	bool invalid = false;
 
+	double stop_duration = 0;
+	if (msg->points[0].time_from_start.toSec() > 0)
+		stop_duration = msg->points[0].time_from_start.toSec();
+	double first_time = ros::Time::now().toSec();
+
+	while ( ( ros::Time::now().toSec() - first_time ) <= stop_duration && stop_duration != 0 )
+	{
+		for( unsigned int i = 0; i < msg->joint_names.size( ) && !invalid; i++ )
+		{
+			if( joints_map.find( msg->joint_names[i] ) != joints_map.end( ) )
+			{
+				Joint *joint = joints_map[msg->joint_names[i]];
+
+				double angle = msg->points[0].positions[i];
+
+				int old_pw = ssc32_dev.query_pulse_width( joint->properties.channel );
+				if( joint->properties.invert )
+					old_pw = 3000 - old_pw;
+				double old_angle = ( ( double ) old_pw - 1500.0 ) / scale + joint->properties.offset_angle;
+
+				double step_angle = ((angle - old_angle) / ( stop_duration - ros::Time::now().toSec() + first_time)) * ( ros::Time::now().toSec() - first_time ) + old_angle;
+				// Validate the commanded position (angle)
+				if( step_angle >= joint->properties.min_angle && step_angle <= joint->properties.max_angle )
+				{
+					cmd[i].ch = joint->properties.channel;
+					cmd[i].pw = ( unsigned int )( scale * ( step_angle - joint->properties.offset_angle ) + 1500 + 0.5 );
+					if( joint->properties.invert )
+						cmd[i].pw = 3000 - cmd[i].pw;
+					if( cmd[i].pw < 500 )
+						cmd[i].pw = 500;
+					else if( cmd[i].pw > 2500 )
+						cmd[i].pw = 2500;
+
+					if( msg->points[0].velocities.size( ) >= i && msg->points[0].velocities[i] > 0 )
+						cmd[i].spd = scale * msg->points[0].velocities[i];
+				}
+				else // invalid angle given
+				{
+					invalid = true;
+					ROS_ERROR( "The given position [%f] for joint [%s] is invalid", step_angle, joint->name.c_str( ) );
+				}
+			}
+			else
+			{
+				invalid = true;
+				ROS_ERROR( "Joint [%s] does not exist", msg->joint_names[i].c_str( ) );
+			}
+		}
+
+			if(!invalid)
+			{
+				// Send command
+				if( !ssc32_dev.move_servo( cmd, num_joints ) )
+					ROS_ERROR( "Failed sending joint commands to controller" );
+			}
+	}
 
 	for( unsigned int i = 0; i < msg->joint_names.size( ) && !invalid; i++ )
 	{
