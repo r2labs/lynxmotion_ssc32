@@ -419,7 +419,7 @@ void SSC32Driver::jointCallback( const ros::MessageEvent<trajectory_msgs::JointT
 		stop_duration = msg->points[0].time_from_start.toSec();
 	double first_time = ros::Time::now().toSec();
 
-	while ( ( ros::Time::now().toSec() - first_time ) <= stop_duration && stop_duration != 0 )
+	while ( ( ros::Time::now().toSec() - first_time ) < (stop_duration - 0.5) && stop_duration != 0 )
 	{
 		for( unsigned int i = 0; i < msg->joint_names.size( ) && !invalid; i++ )
 		{
