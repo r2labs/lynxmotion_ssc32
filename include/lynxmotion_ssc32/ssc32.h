@@ -116,7 +116,6 @@ class SSC32
 
 		std::string get_version( );
 
-	private:
 		/**
 		 * \brief Sends a message to the SSC-32.
 		 *
@@ -126,6 +125,7 @@ class SSC32
 		 * \returns True if there were no errors while sending the message; otherwise, false;
 		 */
 		bool send_message( const char *msg, int size );
+	private:
 
 		int fd; // file description for the serial port
 		int first_instruction[32];
