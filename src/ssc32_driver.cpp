@@ -1,6 +1,7 @@
 #include "lynxmotion_ssc32/ssc32_driver.h"
 #include "math.h"
 #include <algorithm>
+#include <string>
 
 namespace lynxmotion_ssc32
 {
@@ -13,7 +14,7 @@ SSC32Driver::SSC32Driver( ros::NodeHandle &nh ) :
 
 	ros::NodeHandle priv_nh( "~" );
 
-	priv_nh.param<std::string>( "port", port, "/dev/ttyUSB0" );
+	priv_nh.param<std::string>( "port", port, "/dev/ttyACM0" );
 	priv_nh.param<int>( "baud", baud, 115200 );
 	priv_nh.param<bool>( "publish_joint_states", publish_joint_states, true );
 
@@ -262,30 +263,59 @@ bool SSC32Driver::relaxJointsCallback( std_srvs::Empty::Request& request, std_sr
 }
 
 bool SSC32Driver::spin( )
-{
-	bool result = true;
+  {
+    bool result = true;
 
-	if( start( ) && init( ) )
-	{
-		ROS_INFO( "Spinning..." );
+    // if( start( ) && init( ) )
+    if (ssc32_dev.open_port(port.c_str(), baud)) {
+        ROS_INFO( "HERSHAL: Spinning..." );
 
-		while( ros::ok( ) )
-		{
-			update( );
+        while( ros::ok( ) )
+          {
+            // update( );
+            std::string message = "test\r\n";
+            ssc32_dev.send_message(message.c_str(), message.size());
+            ros::spinOnce( );
+          }
+      }
+    else
+      {
+        ROS_ERROR( "HERSHAL: Failed to start" );
+        result = false;
+      }
 
-			ros::spinOnce( );
-		}
-	}
-	else
-	{
-		ROS_ERROR( "Failed to start" );
-		result = false;
-	}
+    stop( );
 
-	stop( );
-
-	return result;
+    return result;
 }
+
+// bool SSC32Driver::spin( )
+// {
+// 	bool result = true;
+
+// 	if( start( ) && init( ) )
+// 	{
+// 		ROS_INFO( "Spinning..." );
+
+// 		while( ros::ok( ) )
+// 		{
+// 			// update( );
+//       char* message = "test\r\n";
+//       ssc32_dev.send_message(message, strlen(message))
+
+// 			ros::spinOnce( );
+// 		}
+// 	}
+// 	else
+// 	{
+// 		ROS_ERROR( "Failed to start" );
+// 		result = false;
+// 	}
+
+// 	stop( );
+
+// 	return result;
+// }
 
 bool SSC32Driver::start( )
 {

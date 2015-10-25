@@ -1,4 +1,5 @@
 #include "lynxmotion_ssc32/ssc32.h"
+#include "unistd.h"
 
 #ifndef DEBUG
 #define DEBUG 0
@@ -136,7 +137,13 @@ bool SSC32::send_message( const char *msg, int size )
 		printf( "\n" );
 #endif
 
-		if( write( fd, msg, size ) < 0 )
+    int n = 0;
+    while (n < size) {
+      write(fd, &msg[n++], 1);
+      usleep(1000);
+    }
+
+		// if( write( fd, msg, size ) < 0 )
 		{
 #if DEBUG
 			printf( "ERROR: [send_message] Failed to write to device\n" );
