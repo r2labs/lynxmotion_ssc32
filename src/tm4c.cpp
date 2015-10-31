@@ -92,7 +92,7 @@ void TM4C::close_port() {
 	}
 }
 
-bool SSC32::send_message(const char *msg, int size) {
+bool TM4C::send_message(const char *msg, int size) {
     if(fd != -1) {
       tcflush(fd, TCIOFLUSH);
 
