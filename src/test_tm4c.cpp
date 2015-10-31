@@ -1,6 +1,6 @@
 #include <iostream>
 #include <string>
-#include "lynxmotion_ssc32/ssc32.h"
+#include "lynxmotion_tm4c/tm4c.h"
 
 int atoi( const char *a, int n )
 {
@@ -34,7 +34,7 @@ int main( int argc, char **argv )
 {
 	std::string port = "/dev/ttyUSB0";
 	int baud = 115200;
-	lynxmotion_ssc32::SSC32 ssc32_device;
+	lynxmotion_tm4c::TM4C tm4c_device;
 	std::string version;
 
 	if( argc < 2 )
@@ -58,23 +58,23 @@ int main( int argc, char **argv )
 	}
 	else if( strcmp( argv[1], "-v" ) == 0 )
 	{
-		if( !ssc32_device.open_port( port.c_str( ), baud ) )
+		if( !tm4c_device.open_port( port.c_str( ), baud ) )
 			return -1;
 
 		std::cout << "Getting software version information..." << std::endl;
 
-		version = ssc32_device.get_version( );
+		version = tm4c_device.get_version( );
 
-		std::cout << "SSC32 Software Version: " << version << std::endl;
+		std::cout << "TM4C Software Version: " << version << std::endl;
 	}
 	else if( strcmp( argv[1], "-c" ) == 0 )
 	{
-		if( !ssc32_device.open_port( port.c_str( ), baud ) )
+		if( !tm4c_device.open_port( port.c_str( ), baud ) )
 			return -1;
 
 		std::cout << "Cancelling current command..." << std::endl;
 
-		if( !ssc32_device.cancel_command( ) )
+		if( !tm4c_device.cancel_command( ) )
 			return -1;
 
 		std::cout << "Done" << std::endl;
@@ -88,7 +88,7 @@ int main( int argc, char **argv )
 			return 1;
 		}
 
-		lynxmotion_ssc32::SSC32::ServoCommand cmd;
+		lynxmotion_tm4c::TM4C::ServoCommand cmd;
 		cmd.ch = atoi( argv[2], strlen( argv[2] ) );
 		cmd.pw = atoi( argv[3], strlen( argv[3] ) );
 
@@ -100,12 +100,12 @@ int main( int argc, char **argv )
 		if( argc > 5 )
 			time = atoi( argv[5], strlen( argv[5] ) );
 
-		if( !ssc32_device.open_port( port.c_str( ), baud ) )
+		if( !tm4c_device.open_port( port.c_str( ), baud ) )
 			return 1;
 
 		std::cout << "Sending command to move servo " << cmd.ch << " to pulse width " << cmd.pw << std::endl;
 
-		if( !ssc32_device.move_servo( cmd, time ) )
+		if( !tm4c_device.move_servo( cmd, time ) )
 			return 1;
 	}
 	else if( strcmp( argv[1], "-o" ) == 0 || strcmp( argv[1], "--offset" ) == 0 )
@@ -119,20 +119,20 @@ int main( int argc, char **argv )
 		int ch = atoi( argv[2], strlen( argv[2] ) );
 		int offset = atoi( argv[3], strlen( argv[3] ) );
 
-		if( !ssc32_device.open_port( port.c_str( ), baud ) )
+		if( !tm4c_device.open_port( port.c_str( ), baud ) )
 			return 1;
 
 		std::cout << "Sending command to offset servo " << ch << " by pulse width " << offset << std::endl;
 
-		if( !ssc32_device.pulse_offset( ch, offset ) )
+		if( !tm4c_device.pulse_offset( ch, offset ) )
 			return 1;
 	}
 	else if( strcmp( argv[1], "-s" ) == 0 || strcmp( argv[1], "--status" ) == 0 )
 	{
-		if( !ssc32_device.open_port( port.c_str( ), baud ) )
+		if( !tm4c_device.open_port( port.c_str( ), baud ) )
 			return 1;
 
-		if( ssc32_device.query_movement_status( ) )
+		if( tm4c_device.query_movement_status( ) )
 			std::cout << "Servos are currently moving." << std::endl;
 		else
 			std::cout << "No servos are currently moving." << std::endl;
@@ -146,22 +146,22 @@ int main( int argc, char **argv )
 		}
 
 		int ch = atoi( argv[2], strlen( argv[2] ) );
-		lynxmotion_ssc32::SSC32::LogicLevel level;
+		lynxmotion_tm4c::TM4C::LogicLevel level;
 
 		if( strcmp( argv[3], "0" ) == 0 )
-			level = lynxmotion_ssc32::SSC32::Low;
+			level = lynxmotion_tm4c::TM4C::Low;
 		else if( strcmp( argv[3], "1" ) == 0 )
-			level = lynxmotion_ssc32::SSC32::High;
+			level = lynxmotion_tm4c::TM4C::High;
 		else
 		{
 			std::cout << "Level must be 0 (0V) or 1 (5V)" << std::endl;
 			return 1;
 		}
 
-		if( !ssc32_device.open_port( port.c_str( ), baud ) )
+		if( !tm4c_device.open_port( port.c_str( ), baud ) )
 			return 1;
 
-		if( !ssc32_device.discrete_output( ch, level ) )
+		if( !tm4c_device.discrete_output( ch, level ) )
 			return 1;
 	}
 	else

@@ -1,5 +1,5 @@
-#ifndef LYNXMOTION_SSC32_SSC32_NODE_H
-#define LYNXMOTION_SSC32_SSC32_NODE_H
+#ifndef LYNXMOTION_TM4C_TM4C_NODE_H
+#define LYNXMOTION_TM4C_TM4C_NODE_H
 
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
@@ -8,9 +8,9 @@
 #include <XmlRpcValue.h>
 #include <string>
 #include <vector>
-#include "ssc32.h"
+#include "tm4c.h"
 
-namespace lynxmotion_ssc32
+namespace lynxmotion_tm4c
 {
 
 struct Joint
@@ -40,7 +40,7 @@ namespace ControllerTypes
 }
 typedef ControllerTypes::ControllerType ControllerType;
 
-class SSC32Driver;
+class TM4CDriver;
 
 struct Controller
 {
@@ -53,14 +53,14 @@ struct Controller
 	private:
 		double expected_publish_time;
 		ros::Time last_publish_time;
-		friend class SSC32Driver;
+		friend class TM4CDriver;
 };
 
-class SSC32Driver
+class TM4CDriver
 {
 	public:
-		SSC32Driver( ros::NodeHandle &nh );
-		~SSC32Driver( );
+		TM4CDriver( ros::NodeHandle &nh );
+		~TM4CDriver( );
 		bool init( );
 		bool relaxJoints( );
 		bool relaxJointsCallback( std_srvs::Empty::Request& request, std_srvs::Empty::Response& response );
@@ -89,7 +89,7 @@ class SSC32Driver
 		std::map<std::string, Controller*> controllers_map;
 		std::map<std::string, Joint*> joints_map;
 
-		SSC32 ssc32_dev;
+		TM4C tm4c_dev;
 
 		ros::Time current_time;
 		ros::Time last_time;
@@ -119,4 +119,4 @@ class SSC32Driver
 
 };
 
-#endif // SSC32_SSC32_NODE_H
+#endif // TM4C_TM4C_NODE_H

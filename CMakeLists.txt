@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(lynxmotion_ssc32)
+project(lynxmotion_tm4c)
 
 find_package(catkin REQUIRED COMPONENTS roscpp sensor_msgs trajectory_msgs)
 
 catkin_package(
    INCLUDE_DIRS include
-   LIBRARIES ssc32_driver ssc32
+   LIBRARIES tm4c_driver tm4c_driver
    CATKIN_DEPENDS roscpp
 )
 
@@ -13,19 +13,19 @@ include_directories(include
   ${catkin_INCLUDE_DIRS}
 )
 
-add_library(ssc32 src/ssc32.cpp)
-target_link_libraries(ssc32 ${catkin_LIBRARIES})
+add_library(tm4c src/tm4c.cpp)
+target_link_libraries(tm4c ${catkin_LIBRARIES})
 
-add_library(ssc32_driver src/ssc32_driver.cpp)
-target_link_libraries(ssc32_driver ssc32 ${catkin_LIBRARIES})
+add_library(tm4c_driver src/tm4c_driver.cpp)
+target_link_libraries(tm4c_driver tm4c ${catkin_LIBRARIES})
 
-add_executable(ssc32_node src/ssc32_node.cpp)
-target_link_libraries(ssc32_node ssc32_driver ${catkin_LIBRARIES})
+add_executable(tm4c_node src/tm4c_node.cpp)
+target_link_libraries(tm4c_node tm4c_driver ${catkin_LIBRARIES})
 
-add_executable(test_ssc32 src/test_ssc32.cpp)
-target_link_libraries(test_ssc32 ssc32_driver ${catkin_LIBRARIES})
+add_executable(test_tm4c src/test_tm4c.cpp)
+target_link_libraries(test_tm4c tm4c_driver ${catkin_LIBRARIES})
 
-install(TARGETS ssc32 ssc32_driver ssc32_node test_ssc32
+install(TARGETS tm4c tm4c_driver tm4c_node test_tm4c
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

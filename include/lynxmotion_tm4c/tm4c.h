@@ -1,5 +1,5 @@
-#ifndef LYNX_MOTION_SSC32_SSC32_H
-#define LYNX_MOTION_SSC32_SSC32_H
+#ifndef LYNX_MOTION_TM4C_TM4C_H
+#define LYNX_MOTION_TM4C_TM4C_H
 
 #include <fcntl.h>
 #include <termios.h>
@@ -11,10 +11,10 @@
 #include <sstream>
 #include <cstdio>
 
-namespace lynxmotion_ssc32
+namespace lynxmotion_tm4c
 {
 
-class SSC32
+class TM4C
 {
 	public:
 		const static unsigned int MAX_PULSE_WIDTH =	2500;
@@ -31,14 +31,14 @@ class SSC32
 
 		        ServoCommand( ) :
 		                ch( 0 ),
-		                pw( SSC32::CENTER_PULSE_WIDTH ),
+		                pw( TM4C::CENTER_PULSE_WIDTH ),
 		                spd( -1 )
 		        {
 		        }
 		};
 
-		SSC32( );
-		~SSC32( );
+		TM4C( );
+		~TM4C( );
 		bool open_port( const char *port, int baud );
 		bool is_connected( );
 		void close_port( );

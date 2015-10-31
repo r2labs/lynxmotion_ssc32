@@ -1,12 +1,12 @@
-#include "lynxmotion_ssc32/ssc32_driver.h"
+#include "lynxmotion_tm4c/tm4c_driver.h"
 #include "math.h"
 #include <algorithm>
 #include <string>
 
-namespace lynxmotion_ssc32
+namespace lynxmotion_tm4c
 {
 
-SSC32Driver::SSC32Driver( ros::NodeHandle &nh ) :
+TM4CDriver::TM4CDriver( ros::NodeHandle &nh ) :
 	nh( nh )
 {
 	for( int i = 0; i < 32; i++ )
@@ -14,7 +14,7 @@ SSC32Driver::SSC32Driver( ros::NodeHandle &nh ) :
 
 	ros::NodeHandle priv_nh( "~" );
 
-	priv_nh.param<std::string>( "port", port, "/dev/ttyACM0" );
+	priv_nh.param<std::string>( "port", port, "/dev/ttyACM1" );
 	priv_nh.param<int>( "baud", baud, 115200 );
 	priv_nh.param<bool>( "publish_joint_states", publish_joint_states, true );
 
@@ -136,6 +136,8 @@ SSC32Driver::SSC32Driver( ros::NodeHandle &nh ) :
 				{
 					std::string joint_name = static_cast<std::string>( joints_array[i] );
 
+          ROS_INFO("slapping the joint on the joint stack: %s", joint_name.c_str());
+
 					if( joints_map.find( joint_name ) != joints_map.end( ) )
 					{
 						controller->joints.push_back( joints_map[joint_name] );
@@ -171,10 +173,10 @@ SSC32Driver::SSC32Driver( ros::NodeHandle &nh ) :
 		ROS_BREAK( );
 	}
 
-	relax_joints_service = nh.advertiseService( "relax_joints", &SSC32Driver::relaxJointsCallback, this );
+	relax_joints_service = nh.advertiseService( "relax_joints", &TM4CDriver::relaxJointsCallback, this );
 }
 
-SSC32Driver::~SSC32Driver( )
+TM4CDriver::~TM4CDriver( )
 {
 	stop( );
 
@@ -190,9 +192,9 @@ SSC32Driver::~SSC32Driver( )
 	}
 }
 
-bool SSC32Driver::init( )
+bool TM4CDriver::init( )
 {
-	SSC32::ServoCommand *cmd;
+	TM4C::ServoCommand *cmd;
 	bool success = true;
 
 	// Initialize each controller
@@ -203,7 +205,7 @@ bool SSC32Driver::init( )
 		// Only initialize the controller if it's a joint controller
 		if( controllers[i]->type == ControllerTypes::JointController )
 		{
-			cmd = new SSC32::ServoCommand[controllers[i]->joints.size( )];
+			cmd = new TM4C::ServoCommand[controllers[i]->joints.size( )];
 
 			for( unsigned int j = 0; j < controllers[i]->joints.size( ); j++ )
 			{
@@ -228,7 +230,7 @@ bool SSC32Driver::init( )
 			}
 
 			// Send command
-			if( !ssc32_dev.move_servo( cmd, controllers[i]->joints.size( ) ) )
+			if( !tm4c_dev.move_servo( cmd, controllers[i]->joints.size( ) ) )
 			{
 				ROS_ERROR( "Failed initializing controller %s", controllers[i]->name.c_str( ) );
 				success = false;
@@ -241,40 +243,40 @@ bool SSC32Driver::init( )
 	return success;
 }
 
-bool SSC32Driver::relaxJoints( )
+bool TM4CDriver::relaxJoints( )
 {
 	ROS_INFO( "Relaxing joints" );
 
-	if( ssc32_dev.is_connected( ) )
+	if( tm4c_dev.is_connected( ) )
 	{
 		for( unsigned int i = 0; i < 32; i++ )
 		{
 			if( channels[i] != NULL )
-				ssc32_dev.discrete_output( i, SSC32::Low );
+				tm4c_dev.discrete_output( i, TM4C::Low );
 		}
 	}
 
 	return true;
 }
 
-bool SSC32Driver::relaxJointsCallback( std_srvs::Empty::Request& request, std_srvs::Empty::Response& response )
+bool TM4CDriver::relaxJointsCallback( std_srvs::Empty::Request& request, std_srvs::Empty::Response& response )
 {
 	return relaxJoints( );
 }
 
-bool SSC32Driver::spin( )
+bool TM4CDriver::spin( )
   {
     bool result = true;
 
-    // if( start( ) && init( ) )
-    if (ssc32_dev.open_port(port.c_str(), baud)) {
+    if( start( ) && init( ) ) {
+    // if (tm4c_dev.open_port(port.c_str(), baud)) {
         ROS_INFO( "HERSHAL: Spinning..." );
 
         while( ros::ok( ) )
           {
-            // update( );
+            update( );
             std::string message = "test\r\n";
-            ssc32_dev.send_message(message.c_str(), message.size());
+            tm4c_dev.send_message(message.c_str(), message.size());
             ros::spinOnce( );
           }
       }
@@ -289,65 +291,37 @@ bool SSC32Driver::spin( )
     return result;
 }
 
-// bool SSC32Driver::spin( )
-// {
-// 	bool result = true;
-
-// 	if( start( ) && init( ) )
-// 	{
-// 		ROS_INFO( "Spinning..." );
-
-// 		while( ros::ok( ) )
-// 		{
-// 			// update( );
-//       char* message = "test\r\n";
-//       ssc32_dev.send_message(message, strlen(message))
-
-// 			ros::spinOnce( );
-// 		}
-// 	}
-// 	else
-// 	{
-// 		ROS_ERROR( "Failed to start" );
-// 		result = false;
-// 	}
-
-// 	stop( );
-
-// 	return result;
-// }
-
-bool SSC32Driver::start( )
+bool TM4CDriver::start( )
 {
-	ROS_INFO( "Starting SSC32Driver" );
+	ROS_INFO( "Starting TM4CDriver" );
 
 	// Start device
-	if( !ssc32_dev.open_port( port.c_str( ), baud ) )
+	if( !tm4c_dev.open_port( port.c_str( ), baud ) )
 		return false;
 
-	std::string version = ssc32_dev.get_version( );
-	if( version.empty( ) )
-	{
-		ROS_ERROR( "Unable to get software version" );
-		ROS_INFO( "Verify the baud rate is set to the correct value" );
-		return false;
-	}
+	// std::string version = tm4c_dev.get_version( );
+	// if( version.empty( ) )
+	// {
+	// 	ROS_ERROR( "Unable to get software version" );
+	// 	ROS_INFO( "Verify the baud rate is set to the correct value" );
+	// 	return false;
+	// }
 
-	ROS_INFO( "SSC32 Software Version: %s", version.c_str( ) );
+	// ROS_INFO( "TM4C Software Version: %s", version.c_str( ) );
 
 	// Subscribe and advertise for every controller
 	for( unsigned int i = 0; i < controllers.size( ); i++ )
 	{
 		joint_state_pubs_map[controllers[i]->name] = nh.advertise<sensor_msgs::JointState>( controllers[i]->name + "/joint_states", 1 );
-		joint_subs.push_back( nh.subscribe( controllers[i]->name + "/command", 1, &SSC32Driver::jointCallback, this ) );
+		joint_subs.push_back( nh.subscribe( controllers[i]->name + "/command", 1, &TM4CDriver::jointCallback, this ) );
 	}
 
 	return true;
 }
 
-void SSC32Driver::stop( )
+void TM4CDriver::stop( )
 {
-	ROS_INFO( "Stopping SSC32Driver" );
+	ROS_INFO( "Stopping TM4CDriver" );
 
 	relaxJoints( );
 
@@ -357,10 +331,10 @@ void SSC32Driver::stop( )
 
 	joint_subs.clear( );
 
-	ssc32_dev.close_port( );
+	tm4c_dev.close_port( );
 }
 
-void SSC32Driver::update( )
+void TM4CDriver::update( )
 {
 	current_time = ros::Time::now( );
 
@@ -372,7 +346,7 @@ void SSC32Driver::update( )
 	last_time = current_time;
 }
 
-void SSC32Driver::publishJointStates( )
+void TM4CDriver::publishJointStates( )
 {
 	for( unsigned int i = 0; i < controllers.size( ); i++ )
 	{
@@ -386,16 +360,16 @@ void SSC32Driver::publishJointStates( )
 			{
 				joints.name.push_back( controllers[i]->joints[j]->name );
 
-				int pw = ssc32_dev.query_pulse_width( controllers[i]->joints[j]->properties.channel );
+				int pw = tm4c_dev.query_pulse_width( controllers[i]->joints[j]->properties.channel );
 
 				if( controllers[i]->joints[j]->properties.invert )
 					pw = 3000 - pw;
 
-				//ROS_DEBUG( "Pulse width for joint [%s] is %d", controllers[i]->joints[j]->name.c_str( ), pw );
+				ROS_INFO( "Pulse width for joint [%s] is %d", controllers[i]->joints[j]->name.c_str( ), pw );
 				//double angle = M_PI_2 * ( ( double )pw - controllers[i]->joints[j]->properties.default_angle ) / 1000.0;
 				double angle = ( ( double ) pw - 1500.0 ) / scale + controllers[i]->joints[j]->properties.offset_angle;
 
-				//ROS_DEBUG( "Angle calculated for joint [%s] is %f", controllers[i]->joints[j]->name.c_str( ), angle );
+				ROS_INFO( "Angle calculated for joint [%s] is %f", controllers[i]->joints[j]->name.c_str( ), angle );
 
 				//if( controllers[i]->joints[j]->properties.invert )
 				//	angle *= -1;
@@ -410,7 +384,7 @@ void SSC32Driver::publishJointStates( )
 	}
 }
 
-void SSC32Driver::jointCallback( const ros::MessageEvent<trajectory_msgs::JointTrajectory const>& event )
+void TM4CDriver::jointCallback( const ros::MessageEvent<trajectory_msgs::JointTrajectory const>& event )
 {
 	ros::M_string connection_header = event.getConnectionHeader( );
 	const trajectory_msgs::JointTrajectoryConstPtr &msg = event.getMessage( );
@@ -440,7 +414,7 @@ void SSC32Driver::jointCallback( const ros::MessageEvent<trajectory_msgs::JointT
 	}
 
 	int num_joints = controllers_map[topic]->joints.size( );
-	SSC32::ServoCommand *cmd = new SSC32::ServoCommand[num_joints];
+	TM4C::ServoCommand *cmd = new TM4C::ServoCommand[num_joints];
 
 	bool invalid = false;
 
@@ -459,7 +433,7 @@ void SSC32Driver::jointCallback( const ros::MessageEvent<trajectory_msgs::JointT
 
 				double angle = msg->points[0].positions[i];
 
-				int old_pw = ssc32_dev.query_pulse_width( joint->properties.channel );
+				int old_pw = tm4c_dev.query_pulse_width( joint->properties.channel );
 				if( joint->properties.invert )
 					old_pw = 3000 - old_pw;
 				double old_angle = ( ( double ) old_pw - 1500.0 ) / scale + joint->properties.offset_angle;
@@ -496,7 +470,7 @@ void SSC32Driver::jointCallback( const ros::MessageEvent<trajectory_msgs::JointT
 			if(!invalid)
 			{
 				// Send command
-				if( !ssc32_dev.move_servo( cmd, num_joints ) )
+				if( !tm4c_dev.move_servo( cmd, num_joints ) )
 					ROS_ERROR( "Failed sending joint commands to controller" );
 			}
 	}
@@ -540,11 +514,10 @@ void SSC32Driver::jointCallback( const ros::MessageEvent<trajectory_msgs::JointT
 	if(!invalid)
 	{
 		// Send command
-		if( !ssc32_dev.move_servo( cmd, num_joints ) )
+		if( !tm4c_dev.move_servo( cmd, num_joints ) )
 			ROS_ERROR( "Failed sending joint commands to controller" );
 	}
 
 	delete[] cmd;
 }
-
 }
