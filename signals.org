@@ -1,0 +1,7 @@
+| Command           | Invocation                   | Format           |
+|-------------------+------------------------------+------------------|
+| move_servo        | J <joint_num> <pulse width>  | 2 chars, 4 chars |
+| jonit_offset      | PO <joint_num> <pulse width> | 2 chars, 4 chars |
+| discrete_output   | D <joint_name> <value>       | 2 chars, H or L  |
+| query_pulse_width | QP <joint_name>              | 2 chars          |
+
