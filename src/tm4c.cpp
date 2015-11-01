@@ -123,7 +123,7 @@ bool TM4C::send_message(const char *msg, int size) {
     return true;
   }
 
-TM4C::move_servo(struct ServoCommand cmd, int time) {
+bool TM4C::move_servo(struct ServoCommand cmd, int time) {
 	return move_servo(&cmd, 1, time);
 }
 
