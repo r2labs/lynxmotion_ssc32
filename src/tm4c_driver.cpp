@@ -270,18 +270,17 @@ bool TM4CDriver::spin( )
 
     if( start( ) && init( ) ) {
     // if (tm4c_dev.open_port(port.c_str(), baud)) {
-        ROS_INFO( "HERSHAL: Spinning..." );
+        // ROS_INFO( "HERSHAL: Spinning..." );
 
-        while( ros::ok( ) )
-          {
-            update( );
-            std::string message = "test\r\n";
-            tm4c_dev.send_message(message.c_str(), message.size());
+        ros::Rate loop_rate(10);
+        while(ros::ok()) {
+            update();
+            // std::string message = "test\r\n";
+            // tm4c_dev.send_message(message.c_str(), message.size());
             ros::spinOnce( );
+            loop_rate.sleep();
           }
-      }
-    else
-      {
+      } else {
         ROS_ERROR( "HERSHAL: Failed to start" );
         result = false;
       }
@@ -365,11 +364,11 @@ void TM4CDriver::publishJointStates( )
 				if( controllers[i]->joints[j]->properties.invert )
 					pw = 3000 - pw;
 
-				ROS_INFO( "Pulse width for joint [%s] is %d", controllers[i]->joints[j]->name.c_str( ), pw );
+				// ROS_INFO( "Pulse width for joint [%s] is %d", controllers[i]->joints[j]->name.c_str( ), pw );
 				//double angle = M_PI_2 * ( ( double )pw - controllers[i]->joints[j]->properties.default_angle ) / 1000.0;
 				double angle = ( ( double ) pw - 1500.0 ) / scale + controllers[i]->joints[j]->properties.offset_angle;
 
-				ROS_INFO( "Angle calculated for joint [%s] is %f", controllers[i]->joints[j]->name.c_str( ), angle );
+				// ROS_INFO( "Angle calculated for joint [%s] is %f", controllers[i]->joints[j]->name.c_str( ), angle );
 
 				//if( controllers[i]->joints[j]->properties.invert )
 				//	angle *= -1;
@@ -440,8 +439,7 @@ void TM4CDriver::jointCallback( const ros::MessageEvent<trajectory_msgs::JointTr
 
 				double step_angle = ((angle - old_angle) / ( stop_duration - ros::Time::now().toSec() + first_time)) * ( ros::Time::now().toSec() - first_time ) + old_angle;
 				// Validate the commanded position (angle)
-				if( step_angle >= joint->properties.min_angle && step_angle <= joint->properties.max_angle )
-				{
+				if( step_angle >= joint->properties.min_angle && step_angle <= joint->properties.max_angle ) {
 					cmd[i].ch = joint->properties.channel;
 					cmd[i].pw = ( unsigned int )( scale * ( step_angle - joint->properties.offset_angle ) + 1500 + 0.5 );
 					if( joint->properties.invert )
@@ -453,9 +451,7 @@ void TM4CDriver::jointCallback( const ros::MessageEvent<trajectory_msgs::JointTr
 
 					if( msg->points[0].velocities.size( ) >= i && msg->points[0].velocities[i] > 0 )
 						cmd[i].spd = scale * msg->points[0].velocities[i];
-				}
-				else // invalid angle given
-				{
+				} else /* invalid angle given */ {
 					invalid = true;
 					ROS_ERROR( "The given position [%f] for joint [%s] is invalid", step_angle, joint->name.c_str( ) );
 				}

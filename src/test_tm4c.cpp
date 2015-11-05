@@ -32,7 +32,7 @@ int atoi( const char *a, int n )
 
 int main( int argc, char **argv )
 {
-	std::string port = "/dev/ttyUSB0";
+	std::string port = "/dev/ttyACM0";
 	int baud = 115200;
 	lynxmotion_tm4c::TM4C tm4c_device;
 	std::string version;

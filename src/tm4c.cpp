@@ -1,6 +1,7 @@
 #include <ros/ros.h>
 #include "lynxmotion_tm4c/tm4c.h"
 #include "unistd.h"
+#include <string>
 
 #ifndef DEBUG
 #define DEBUG 1
@@ -159,7 +160,7 @@ bool TM4C::move_servo(struct ServoCommand cmd[], unsigned int n, int time)
 			return false;
 		}
 
-		sprintf(temp, "J %2u P%4u \r", cmd[i].ch, cmd[i].pw);
+		sprintf(temp, "J %.2u %.4u \r", cmd[i].ch, cmd[i].pw);
 		strcat(msg, temp);
 
 		if(first_instruction[cmd[i].ch] != 0) {
@@ -179,8 +180,8 @@ bool TM4C::move_servo(struct ServoCommand cmd[], unsigned int n, int time)
 		strcat(msg, temp);
 	}
 
-	strcat(msg, "\r");
-  ROS_INFO("HERSHAL: SENDING MESSAGE: %s", msg);
+	// strcat(msg, "\r");
+   // ROS_INFO("HERSHAL: SENDING MESSAGE: %s", msg);
 	result = send_message(msg, strlen(msg));
 
 	/* If the command was success, then the channels commanded */
@@ -230,7 +231,7 @@ bool TM4C::pulse_offset(unsigned int ch[], int value[], unsigned int n) {
 			return false;
 		}
 
-		sprintf(temp, "PO %2u %4d ", ch[i], value[i]);
+		sprintf(temp, "PO %.2u %.4d ", ch[i], value[i]);
 		strcat(msg, temp);
 	}
 
@@ -262,7 +263,7 @@ bool TM4C::discrete_output(unsigned int ch[], LogicLevel lvl[], unsigned int n) 
 			return false;
 		}
 
-		sprintf(temp, "D %2u %c ", ch[i], (lvl[i] == High) ? 'H' : 'L');
+		sprintf(temp, "D %.2u %c ", ch[i], (lvl[i] == High) ? 'H' : 'L');
 		strcat(msg, temp);
 	}
 
@@ -323,7 +324,7 @@ bool TM4C::query_movement_status()
 
 int TM4C::query_pulse_width(unsigned int ch)
 {
-	unsigned char buffer;
+	char buffer[32];
 	int bytes_read = 0;
 	char msg[7];
 
@@ -335,7 +336,7 @@ int TM4C::query_pulse_width(unsigned int ch)
 		return false;
 	}
 
-	sprintf(msg, "QP %2u \r", ch);
+	sprintf(msg, "QP %.2u \r", ch);
 
 	if(!send_message(msg, strlen(msg))) {
 #if DEBUG
@@ -345,18 +346,28 @@ int TM4C::query_pulse_width(unsigned int ch)
   }
 
   /* It can take up to 5ms before the controller responds, so sleep for 5ms. */
-	usleep(5000);
+	usleep(50000);
 
-	while(bytes_read != 1) {
-		if((bytes_read = read(fd, &buffer, 1)) < 0) {
+		if((bytes_read = read(fd, &buffer, 13)) < 0) {
 #if DEBUG
 			printf("ERROR: [query_pulse_width] Failed to read from the device\n");
 #endif
 			return -1;
 		}
-	}
 
-	return (10 * (int)buffer);
+    // printf("INFO [query_pulse_width] :: return %d bytes: %s\n", bytes_read, buffer);
+    
+    std::string input(buffer);
+    std::string chopped(std::find(input.begin(), input.end(), '\n'), input.end());
+    int pw;
+    try {
+        pw = std::stoi(chopped);
+    } catch (...) {
+        printf("INFO [query_pulse_width] :: BROKE: %s\n", chopped.c_str());
+        return -1;
+    }
+    printf("INFO [query_pulse_width] :: return %d\n", pw);
+    return (pw);
 }
 
 std::string TM4C::get_version() {

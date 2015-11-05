@@ -12,7 +12,7 @@ catkin_package(
 include_directories(include
   ${catkin_INCLUDE_DIRS}
 )
-
+add_definitions(-std=gnu++0x)
 add_library(tm4c src/tm4c.cpp)
 target_link_libraries(tm4c ${catkin_LIBRARIES})
 
