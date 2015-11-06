@@ -191,6 +191,7 @@ bool TM4C::move_servo(struct ServoCommand cmd[], unsigned int n, int time)
 			first_instruction[cmd[i].ch] = 1;
     }
   }
+  usleep(5000);
 	return result;
 }
 
@@ -346,9 +347,9 @@ int TM4C::query_pulse_width(unsigned int ch)
   }
 
   /* It can take up to 5ms before the controller responds, so sleep for 5ms. */
-	usleep(50000);
+	usleep(5000);
 
-		if((bytes_read = read(fd, &buffer, 13)) < 0) {
+		if((bytes_read = read(fd, &buffer, 25)) < 0) {
 #if DEBUG
 			printf("ERROR: [query_pulse_width] Failed to read from the device\n");
 #endif
