@@ -98,7 +98,7 @@ bool TM4C::send_message(const char *msg, int size) {
       tcflush(fd, TCIOFLUSH);
 
 #if DEBUG
-      printf("INFO: [send_message] Sending message: ");
+      /* printf("INFO: [send_message] Sending message: "); */
       for(unsigned int i = 0; i < strlen(msg); i++) {
         switch(msg[i]) {
         case '\r': printf("<cr>"); break;
@@ -181,7 +181,7 @@ bool TM4C::move_servo(struct ServoCommand cmd[], unsigned int n, int time)
 	}
 
 	// strcat(msg, "\r");
-   // ROS_INFO("HERSHAL: SENDING MESSAGE: %s", msg);
+  /* ROS_INFO("HERSHAL: SENDING MESSAGE: %s", msg); */
 	result = send_message(msg, strlen(msg));
 
 	/* If the command was success, then the channels commanded */
@@ -367,7 +367,7 @@ int TM4C::query_pulse_width(unsigned int ch)
         printf("INFO [query_pulse_width] :: BROKE: %s\n", chopped.c_str());
         return -1;
     }
-    printf("INFO [query_pulse_width] :: return %d\n", pw);
+    /* printf("INFO [query_pulse_width] :: return %d\n", pw); */
     return (pw);
 }
 
