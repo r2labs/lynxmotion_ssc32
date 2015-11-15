@@ -15,28 +15,28 @@ namespace lynxmotion_tm4c
 
 struct Joint
 {
-	struct JointProperties
-	{
-		int channel;
-		double min_angle;
-		double max_angle;
-		double offset_angle; // this angle is considered to be 1500 uS
-		double default_angle; // angle that the joint is initialized to (defaults to the offset_angle)
-		bool initialize; // Indicates whether to initialize the servo to the default angle on startup.
-		bool invert;
-	};
+  struct JointProperties
+  {
+    int channel;
+    double min_angle;
+    double max_angle;
+    double offset_angle; // this angle is considered to be 1500 uS
+    double default_angle; // angle that the joint is initialized to (defaults to the offset_angle)
+    bool initialize; // Indicates whether to initialize the servo to the default angle on startup.
+    bool invert;
+  };
 
-	std::string name;
-	JointProperties properties;
+  std::string name;
+  JointProperties properties;
 };
 
 namespace ControllerTypes
 {
-	enum ControllerType
-	{
-		JointController,
-		DiffDriveController
-	};
+  enum ControllerType
+  {
+    JointController,
+    DiffDriveController
+  };
 }
 typedef ControllerTypes::ControllerType ControllerType;
 
@@ -44,77 +44,78 @@ class TM4CDriver;
 
 struct Controller
 {
-	std::string name;
-	ControllerType type;
-	std::vector<Joint*> joints; // Pointer to the joints in this controller
-	bool publish_joint_states;
-	double publish_rate;
+  std::string name;
+  ControllerType type;
+  std::vector<Joint*> joints; // Pointer to the joints in this controller
+  bool publish_joint_states;
+  double publish_rate;
 
-	private:
-		double expected_publish_time;
-		ros::Time last_publish_time;
-		friend class TM4CDriver;
+  private:
+    double expected_publish_time;
+    ros::Time last_publish_time;
+    friend class TM4CDriver;
 };
 
 class TM4CDriver
 {
-	public:
-		TM4CDriver( ros::NodeHandle &nh );
-		~TM4CDriver( );
-		bool init( );
-		bool relaxJoints( );
-		bool relaxJointsCallback( std_srvs::Empty::Request& request, std_srvs::Empty::Response& response );
-		bool spin( );
-		bool start( );
-		void stop( );
-		void update( );
+  public:
+    TM4CDriver( ros::NodeHandle &nh );
+    ~TM4CDriver( );
+    bool init( );
+    bool relaxJoints( );
+    bool relaxJointsCallback( std_srvs::Empty::Request& request, std_srvs::Empty::Response& response );
+    bool spin( );
+    bool start( );
+    void stop( );
+    void update( );
 
-	private:
-		void publishJointStates( );
-		void jointCallback( const ros::MessageEvent<trajectory_msgs::JointTrajectory const>& event );
+  private:
+    void publishJointStates( );
+    void jointCallback( const ros::MessageEvent<trajectory_msgs::JointTrajectory const>& event );
 
-		ros::NodeHandle nh;
-		ros::ServiceServer relax_joints_service;
-		std::vector<ros::Subscriber> joint_subs;
-		std::map<std::string, ros::Publisher> joint_state_pubs_map;
+    ros::NodeHandle nh;
+    ros::ServiceServer relax_joints_service;
+    std::vector<ros::Subscriber> joint_subs;
+    std::map<std::string, ros::Publisher> joint_state_pubs_map;
 
-		Joint *channels[32];
+    Joint *channels[32];
 
-		std::string port;
-		int baud;
-		bool publish_joint_states;
-		double range_scale;
-		double scale;
-		std::vector<Controller*> controllers;
-		std::map<std::string, Controller*> controllers_map;
-		std::map<std::string, Joint*> joints_map;
+    bilinear_interpolator<int> interpolator;
+    std::string port;
+    int baud;
+    bool publish_joint_states;
+    double range_scale;
+    double scale;
+    std::vector<Controller*> controllers;
+    std::map<std::string, Controller*> controllers_map;
+    std::map<std::string, Joint*> joints_map;
 
-		TM4C tm4c_dev;
+    TM4C tm4c_dev;
 
-		ros::Time current_time;
-		ros::Time last_time;
+    ros::Time current_time;
+    ros::Time last_time;
 
-		/*!
-		 * \brief Class that gives access to an XmlRpcValue's ValueStruct or ValueArray.
-		 */
-		class XmlRpcValueAccess : private XmlRpc::XmlRpcValue
-		{
-			public:
-				XmlRpcValueAccess( XmlRpc::XmlRpcValue xml_rpc_value ) :
-					XmlRpc::XmlRpcValue( xml_rpc_value ) { }
+    /*!
+     * \brief Class that gives access to an XmlRpcValue's ValueStruct or ValueArray.
+     */
+    class XmlRpcValueAccess : private XmlRpc::XmlRpcValue
+    {
+      public:
+        XmlRpcValueAccess( XmlRpc::XmlRpcValue xml_rpc_value ) :
+          XmlRpc::XmlRpcValue( xml_rpc_value ) { }
 
-				XmlRpc::XmlRpcValue::ValueStruct getValueStruct( )
-				{
-					assertStruct( );
-					return *_value.asStruct;
-				}
+        XmlRpc::XmlRpcValue::ValueStruct getValueStruct( )
+        {
+          assertStruct( );
+          return *_value.asStruct;
+        }
 
-				XmlRpc::XmlRpcValue::ValueArray getValueArray( )
-				{
-					assertArray( size( ) );
-					return *_value.asArray;
-				}
-		};
+        XmlRpc::XmlRpcValue::ValueArray getValueArray( )
+        {
+          assertArray( size( ) );
+          return *_value.asArray;
+        }
+    };
 };
 
 };
