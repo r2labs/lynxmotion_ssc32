@@ -25,8 +25,8 @@ def unzip(n):
     return {"shl": shl, "elb": elb}
 
 def generate_pair(pair):
-    # if pair[0] == None or pair[1] == None:
-    #     return ""
+    if pair[0] == None or pair[1] == None:
+        return ""
     return "{" + str(pair[0]) + ", " + str(pair[1]) + "}, "
 
 def generate_line(shl_angle, pairs):
