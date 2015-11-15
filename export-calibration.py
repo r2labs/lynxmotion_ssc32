@@ -65,6 +65,7 @@ with open("calibration.org") as f:
     assert(len(shl_angles) == len(shl_pws) == len(elb_pws) and
            len(shl_pws[0]) == len(shl_pws[0]) == len(shl_pws[0]))
 
+    # write the file
     with open("include/lynxmotion_tm4c/joint_maps.hpp", "w") as w:
         for i in range(len(shl_angles)):
             pw_entries = list(zip(elb_angles, shl_pws[i]))
@@ -73,7 +74,6 @@ with open("calibration.org") as f:
             pw_entries = list(zip(elb_angles, elb_pws[i]))
             elb_strings.append(generate_line(shl_angles[i], pw_entries))
 
-        # write the file
         w.write("    std::map<int, std::map<int, int> > m_shl = {\n")
         for i in shl_strings:
             w.write(i + "\n")
