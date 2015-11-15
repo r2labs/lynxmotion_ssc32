@@ -16,15 +16,17 @@ def unzip(n):
     elb = []
     for i in n:
         nums = [x.strip() for x in i.split(",")]
-        if i in ["", "OOB", "NA"] or len(nums) != 2:
-            shl.append("2000")
-            elb.append("2000")
+        if not all(list(map(isnum, nums))):
+            shl.append(None)
+            elb.append(None)
         else:
             shl.append(nums[0])
             elb.append(nums[1])
     return {"shl": shl, "elb": elb}
 
 def generate_pair(pair):
+    # if pair[0] == None or pair[1] == None:
+    #     return ""
     return "{" + str(pair[0]) + ", " + str(pair[1]) + "}, "
 
 def generate_line(shl_angle, pairs):
