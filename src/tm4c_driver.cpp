@@ -2,6 +2,7 @@
 #include "math.h"
 #include <algorithm>
 #include <string>
+#include "lynxmotion_tm4c/joint_maps.hpp"
 
 namespace lynxmotion_tm4c
 {
@@ -439,9 +440,14 @@ void TM4CDriver::jointCallback( const ros::MessageEvent<trajectory_msgs::JointTr
 
         if (i == 1) {
           // cmd[i].pw = (unsigned int)(angle*joint->properties.slope + joint->properties.intercept);
+          cmd[i].pw = interpolator.get(msg->points[0].positions[1] * (180/M_PI),
+                                       msg->points[0].positions[2] * (180/M_PI),
+                                       m_shl);
           ROS_INFO("setting joint angle to %i", cmd[i].pw);
         } else if (i == 2) {
-
+          cmd[i].pw = interpolator.get(msg->points[0].positions[1] * (180/M_PI),
+                                       msg->points[0].positions[2] * (180/M_PI),
+                                       m_elb);
         }else {
         cmd[i].pw = (unsigned int)
           (lerp((float)(angle), 0.0 + joint->properties.offset_angle, 3.14, 600.0, 2400.0));
