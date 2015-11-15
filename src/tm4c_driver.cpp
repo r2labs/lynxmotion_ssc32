@@ -53,7 +53,9 @@ TM4CDriver::TM4CDriver( ros::NodeHandle &nh ) :
 
 			priv_nh.param<double>( joint_graph_name + "max_angle", joint->properties.max_angle, M_PI_2 );
 			priv_nh.param<double>( joint_graph_name + "min_angle", joint->properties.min_angle, -M_PI_2 );
-			priv_nh.param<double>( joint_graph_name + "offset_angle", joint->properties.offset_angle, 0 );
+			priv_nh.param<double>( joint_graph_name + "slope", joint->properties.slope, 0 );
+			priv_nh.param<double>( joint_graph_name + "intercept", joint->properties.intercept, 0 );
+			priv_nh.param<double>( joint_graph_name + "offset_angle", joint->properties.offset_angle, joint->properties.offset_angle );
 			priv_nh.param<double>( joint_graph_name + "default_angle", joint->properties.default_angle, joint->properties.offset_angle );
 			priv_nh.param<bool>( joint_graph_name + "initialize", joint->properties.initialize, true );
 			priv_nh.param<bool>( joint_graph_name + "invert", joint->properties.invert, false );
@@ -178,7 +180,7 @@ TM4CDriver::TM4CDriver( ros::NodeHandle &nh ) :
 
 TM4CDriver::~TM4CDriver( )
 {
-	stop( );
+	/* stop( ); */
 
 	for( int i = 0; i < 32; i++ )
 		if( channels[i] )
@@ -285,7 +287,7 @@ bool TM4CDriver::spin( )
         result = false;
       }
 
-    stop( );
+    /* stop( ); */
 
     return result;
 }
@@ -345,6 +347,13 @@ void TM4CDriver::update( )
 	last_time = current_time;
 }
 
+
+float lerp(float x, float x_min, float x_max, float y_min, float y_max) {
+  if (x > x_max) { return y_max; }
+  else if (x < x_min) { return y_min; }
+  return y_min + (y_max - y_min)*((x - x_min)/(x_max - x_min));
+}
+
 void TM4CDriver::publishJointStates( )
 {
 	for( unsigned int i = 0; i < controllers.size( ); i++ )
@@ -390,8 +399,7 @@ void TM4CDriver::jointCallback( const ros::MessageEvent<trajectory_msgs::JointTr
 
 	std::string topic = connection_header["topic"];
 
-	if( topic.empty( ) )
-	{
+	if( topic.empty() ) {
 		ROS_ERROR( "The connection header topic is empty" );
 		return;
 	}
@@ -406,8 +414,7 @@ void TM4CDriver::jointCallback( const ros::MessageEvent<trajectory_msgs::JointTr
 		topic.erase( it, topic.end( ) );
 
 	// Validate the controller name
-	if( controllers_map.find( topic ) == controllers_map.end() )
-	{
+	if( controllers_map.find( topic ) == controllers_map.end() ) {
 		ROS_ERROR( "[%s] is not a valid controller name.", topic.c_str( ) );
 		return;
 	}
@@ -422,86 +429,38 @@ void TM4CDriver::jointCallback( const ros::MessageEvent<trajectory_msgs::JointTr
 		stop_duration = msg->points[0].time_from_start.toSec();
 	double first_time = ros::Time::now().toSec();
 
-	while ( ( ros::Time::now().toSec() - first_time ) < (stop_duration - 0.5) && stop_duration != 0 )
-	{
-		for( unsigned int i = 0; i < msg->joint_names.size( ) && !invalid; i++ )
-		{
-			if( joints_map.find( msg->joint_names[i] ) != joints_map.end( ) )
-			{
-				Joint *joint = joints_map[msg->joint_names[i]];
+  for(unsigned int i = 0; i < msg->joint_names.size() && !invalid; i++) {
+		if(joints_map.find(msg->joint_names[i]) != joints_map.end()) {
 
-				double angle = msg->points[0].positions[i];
-
-				int old_pw = tm4c_dev.query_pulse_width( joint->properties.channel );
-				if( joint->properties.invert )
-					old_pw = 3000 - old_pw;
-				double old_angle = ( ( double ) old_pw - 1500.0 ) / scale + joint->properties.offset_angle;
-
-				double step_angle = ((angle - old_angle) / ( stop_duration - ros::Time::now().toSec() + first_time)) * ( ros::Time::now().toSec() - first_time ) + old_angle;
-				// Validate the commanded position (angle)
-				if( step_angle >= joint->properties.min_angle && step_angle <= joint->properties.max_angle ) {
-					cmd[i].ch = joint->properties.channel;
-					cmd[i].pw = ( unsigned int )( scale * ( step_angle - joint->properties.offset_angle ) + 1500 + 0.5 );
-					if( joint->properties.invert )
-						cmd[i].pw = 3000 - cmd[i].pw;
-					if( cmd[i].pw < 500 )
-						cmd[i].pw = 500;
-					else if( cmd[i].pw > 2500 )
-						cmd[i].pw = 2500;
-
-					if( msg->points[0].velocities.size( ) >= i && msg->points[0].velocities[i] > 0 )
-						cmd[i].spd = scale * msg->points[0].velocities[i];
-				} else /* invalid angle given */ {
-					invalid = true;
-					ROS_ERROR( "The given position [%f] for joint [%s] is invalid", step_angle, joint->name.c_str( ) );
-				}
-			}
-			else
-			{
-				invalid = true;
-				ROS_ERROR( "Joint [%s] does not exist", msg->joint_names[i].c_str( ) );
-			}
-		}
-
-			if(!invalid)
-			{
-				// Send command
-				if( !tm4c_dev.move_servo( cmd, num_joints ) )
-					ROS_ERROR( "Failed sending joint commands to controller" );
-			}
-	}
-
-	for( unsigned int i = 0; i < msg->joint_names.size( ) && !invalid; i++ )
-	{
-		if( joints_map.find( msg->joint_names[i] ) != joints_map.end( ) )
-		{
 			Joint *joint = joints_map[msg->joint_names[i]];
-
 			double angle = msg->points[0].positions[i];
 
 			// Validate the commanded position (angle)
-			if( angle >= joint->properties.min_angle && angle <= joint->properties.max_angle )
-			{
+			if( angle >= joint->properties.min_angle && angle <= joint->properties.max_angle ) {
 				cmd[i].ch = joint->properties.channel;
-				cmd[i].pw = ( unsigned int )( scale * ( angle - joint->properties.offset_angle ) + 1500 + 0.5 );
+
+        if (i == 1) {
+          cmd[i].pw = (unsigned int)(angle*joint->properties.slope + joint->properties.intercept);
+          ROS_INFO("setting joint angle to %i", cmd[i].pw);
+        } else {
+        cmd[i].pw = (unsigned int)
+          (lerp((float)(angle), 0.0 + joint->properties.offset_angle, 3.14, 600.0, 2400.0));
+				}
+        /* cmd[i].pw = ( unsigned int )( scale * ( angle - joint->properties.offset_angle ) + 1500 + 0.5 ); */
 				if( joint->properties.invert )
 					cmd[i].pw = 3000 - cmd[i].pw;
-				if( cmd[i].pw < 500 )
-					cmd[i].pw = 500;
-				else if( cmd[i].pw > 2500 )
-					cmd[i].pw = 2500;
+				/* if( cmd[i].pw < 500 ) */
+				/* 	cmd[i].pw = 500; */
+				/* else if( cmd[i].pw > 2500 ) */
+				/* 	cmd[i].pw = 2500; */
 
 				if( msg->points[0].velocities.size( ) >= i && msg->points[0].velocities[i] > 0 )
 					cmd[i].spd = scale * msg->points[0].velocities[i];
-			}
-			else // invalid angle given
-			{
+			} else {
 				invalid = true;
-				ROS_ERROR( "The given position [%f] for joint [%s] is invalid", angle, joint->name.c_str( ) );
+				ROS_ERROR( "The given position [%f] for joint [%s] is invalid 2", angle, joint->name.c_str( ) );
 			}
-		}
-		else
-		{
+		} else {
 			invalid = true;
 			ROS_ERROR( "Joint [%s] does not exist", msg->joint_names[i].c_str( ) );
 		}
