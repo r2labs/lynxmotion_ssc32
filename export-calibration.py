@@ -3,6 +3,8 @@ from sys import argv
 import pdb
 
 def isnum(n):
+    if n == None:
+        return False
     try:
         int(n)
         return True
