@@ -85,3 +85,18 @@ with open("calibration.org") as f:
         for i in elb_strings:
             w.write(i + "\n")
         w.write("};\n\n")
+
+        with open("joint_map.m", "w") as w:
+            def encapsulaten(arr):
+                return "[" +  ", ".join(map(str, arr)) + "]\n"
+            def encapsulate(arr):
+                return "[" +  ", ".join(map(lambda x: str(x) if isnum(x) or isinstance(x, str) else "0", arr)) + "]\n"
+            w.write("shl_angles = ")
+            w.write(encapsulate(shl_angles));
+            w.write("elb_angles = ")
+            w.write(encapsulate(elb_angles));
+
+            w.write("shl_pws = ")
+            w.write(encapsulaten([encapsulate(x) for x in shl_pws]))
+            w.write("elb_pws = ")
+            w.write(encapsulaten([encapsulate(x) for x in elb_pws]))
