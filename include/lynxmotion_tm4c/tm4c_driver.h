@@ -81,7 +81,7 @@ class TM4CDriver
 
     Joint *channels[32];
 
-    bilinear_interpolator<int> interpolator;
+    bilinear_interpolator<float> interpolator;
     std::string port;
     int baud;
     bool publish_joint_states;

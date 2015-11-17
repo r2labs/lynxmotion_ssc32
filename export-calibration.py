@@ -78,12 +78,12 @@ with open("calibration.org") as f:
             pw_entries = list(zip(elb_angles, elb_pws[i]))
             elb_strings.append(generate_line(shl_angles[i], pw_entries))
 
-        w.write("    std::map<int, std::map<int, int> > m_shl = {\n")
+        w.write("    std::map<float, std::map<float, float> > m_shl = {\n")
         for i in shl_strings:
             w.write(i + "\n")
         w.write("};\n\n")
 
-        w.write("    std::map<int, std::map<int, int> > m_elb = {\n")
+        w.write("    std::map<float, std::map<float, float> > m_elb = {\n")
         for i in elb_strings:
             w.write(i + "\n")
         w.write("};\n\n")
