@@ -128,7 +128,6 @@ bool TM4C::move_servo(struct ServoCommand cmd, int time) {
 	return move_servo(&cmd, 1, time);
 }
 
-/* n is number of channels; or length of cmd[] */
 bool TM4C::move_servo(struct ServoCommand cmd[], unsigned int n, int time)
 {
 	char msg[1024] = { 0 };
@@ -138,8 +137,6 @@ bool TM4C::move_servo(struct ServoCommand cmd[], unsigned int n, int time)
 	bool result;
 
 	time_flag = 0;
-  const float time_step = 0.1; /* seconds */
-  const int num_steps = time / time_step;
 
 	if(n > TM4C::MAX_CHANNELS) {
 #if DEBUG
@@ -148,57 +145,44 @@ bool TM4C::move_servo(struct ServoCommand cmd[], unsigned int n, int time)
 		return false;
 	}
 
-  float pw_step[n] = { 0 };
-  int current_pw[n] = { 0 };
-  for(int i = 0; i < n; ++i) {
-      current_pw[i] = query_pulse_width(i);
-      float pw_difference = abs(current_pw[i] - cmd[i].pw);
-      pw_step[i] = (pw_diference / time) * time_step;
-  }
-
-  for(int s = 0; s < num_steps; ++s) {
-      for(i = 0; i < n; i++) {
-          if(cmd[i].ch > 31) {
+	for(i = 0; i < n; i++) {
+		if(cmd[i].ch > 31) {
 #if DEBUG
-              printf("ERROR: [move_servo] Invalid channel [%u]\n", cmd[i].ch);
+			printf("ERROR: [move_servo] Invalid channel [%u]\n", cmd[i].ch);
 #endif
-              return false;
-          }
+			return false;
+		}
 
-          if(cmd[i].pw < TM4C::MIN_PULSE_WIDTH || cmd[i].pw > TM4C::MAX_PULSE_WIDTH) {
+		if(cmd[i].pw < TM4C::MIN_PULSE_WIDTH || cmd[i].pw > TM4C::MAX_PULSE_WIDTH) {
 #if DEBUG
-              printf("ERROR: [move_servo] Invalid pulse width [%u]\n", cmd[i].pw);
+			printf("ERROR: [move_servo] Invalid pulse width [%u]\n", cmd[i].pw);
 #endif
-              return false;
-          }
+			return false;
+		}
 
-          current_pw[i] += pw_step[i];
-          sprintf(temp, "J %.2u %.4u \r", cmd[i].ch, current_pw[i]);
-          strcat(msg, temp);
+		sprintf(temp, "J %.2u %.4u \r", cmd[i].ch, cmd[i].pw);
+		strcat(msg, temp);
 
-          if(first_instruction[cmd[i].ch] != 0) {
-              if(cmd[i].spd > 0) {
-                  sprintf(temp, "S%d ", cmd[i].spd);
-                  strcat(msg, temp);
-              }
-          }
-          else { /* this is the first instruction for this channel */
-              time_flag++;
-          }
-      }
+		if(first_instruction[cmd[i].ch] != 0) {
+			if(cmd[i].spd > 0) {
+        sprintf(temp, "S%d ", cmd[i].spd);
+				strcat(msg, temp);
+			}
+		}
+		else /* this is the first instruction for this channel */
+			time_flag++;
+	}
 
-      /* If time_flag is 0, then this is not the first instruction */
-      /* for any channels to move the servo */
-      if(time_flag == 0 && time > 0) {
-          sprintf(temp, "T%d ", time);
-          strcat(msg, temp);
-      }
+	/* If time_flag is 0, then this is not the first instruction */
+	/* for any channels to move the servo */
+	if(time_flag == 0 && time > 0) {
+		sprintf(temp, "T%d ", time);
+		strcat(msg, temp);
+	}
 
-      /* ROS_INFO("HERSHAL: SENDING MESSAGE: %s", msg); */
-      result = send_message(msg, strlen(msg));
-      usleep(time_step * 1000000);
-  }
-
+	// strcat(msg, "\r");
+  /* ROS_INFO("HERSHAL: SENDING MESSAGE: %s", msg); */
+	result = send_message(msg, strlen(msg));
 
 	/* If the command was success, then the channels commanded */
 	/* are not on their first instuction anymore. */
