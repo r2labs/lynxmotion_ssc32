@@ -5,6 +5,8 @@
 #include <math.h>
 #ifdef DEBUG
 #include <iostream>
+#include <numeric>
+#include <vector>
 #endif
 
 template <typename T>
@@ -35,30 +37,14 @@ public:
             y_lower = it2->first;
         }
 
-        float xy_topleft = m[x_lower][y_lower];
-        float xy_topright = m[x_higher][y_lower];
-        float xy_bottomleft = m[x_lower][y_higher];
-        float xy_bottomright = m[x_higher][y_higher];
+        float xy[4];
+        xy[0] = m[x_lower][y_lower];
+        xy[1] = m[x_higher][y_lower];
+        xy[2] = m[x_lower][y_higher];
+        xy[3] = m[x_higher][y_higher];
 
-        float x1_lerp = lerp(x, x_lower, x_higher, xy_topleft, xy_topright);
-        float x2_lerp = lerp(x, x_lower, x_higher, xy_bottomleft, xy_bottomright);
-        float xy_lerp = lerp(y, y_lower, y_higher, x1_lerp, x2_lerp);
-
-#ifdef DEBUG
-        std::cout << "wanted: " << x << ", " << y << "\n" <<
-            "got_x: " << x_lower << ", " << x_higher << "\n" <<
-            "got_y: " << y_lower << ", " << y_higher << "\n";
-
-        std::cout << xy_topleft << "\t" << xy_topright << "\n"
-                  << xy_bottomleft << "\t" << xy_bottomright << "\n";
-
-        std::cout << "x1lerp: " << x1_lerp << "\nx2lerp: " << x2_lerp
-                  << "\nxylerp: " << xy_lerp << "\n";
-#endif
-
-        return (T)(xy_lerp);
+        return (T)(bilinear(x, y, x_lower, x_higher, y_lower, y_higher, xy));
     }
-
 
 private:
     float lerp(float x, float x_min, float x_max, float y_min, float y_max) {
@@ -66,13 +52,30 @@ private:
         else if (x <= x_min) { return y_min; }
         return y_min + (y_max - y_min)*((x - x_min)/(x_max - x_min));
     }
+
+
+
+
+    float bilinear(T x, T y, T x_lower, T x_higher, T y_lower, T y_higher,
+                   float xy[4]) {
+        float x1_lerp = lerp(x, x_lower, x_higher, xy[0], xy[2]);
+        float x2_lerp = lerp(x, x_lower, x_higher, xy[1], xy[3]);
+        float xy_lerp = lerp(y, y_lower, y_higher, x1_lerp, x2_lerp);
+
+#ifdef DEBUG
+        std::cout << "wanted: " << x << ", " << y << "\n" <<
+            "got_x: " << x_lower << ", " << x_higher << "\n" <<
+            "got_y: " << y_lower << ", " << y_higher << "\n";
+
+        std::cout << xy[0] << "\t" << xy[2] << "\n"
+                  << xy[1] << "\t" << xy[3] << "\n";
+
+        std::cout << "x1lerp: " << x1_lerp << "\nx2lerp: " << x2_lerp
+                  << "\nxylerp: " << xy_lerp << "\n";
+#endif
+
+        return xy_lerp;
+    }
 };
 
 #endif /* __GRADIENTMAP_HPP__ */
-
-
-
-
-
-
-
