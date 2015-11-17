@@ -460,8 +460,9 @@ void TM4CDriver::jointCallback( const ros::MessageEvent<trajectory_msgs::JointTr
         /* else if( cmd[i].pw > 2500 ) */
         /*  cmd[i].pw = 2500; */
 
-        if( msg->points[0].velocities.size( ) >= i && msg->points[0].velocities[i] > 0 )
+        if( msg->points[0].velocities.size( ) >= i && msg->points[0].velocities[i] > 0 ) {
           cmd[i].spd = scale * msg->points[0].velocities[i];
+        }
       } else {
         invalid = true;
         ROS_ERROR( "The given position [%f] for joint [%s] is invalid 2", angle, joint->name.c_str( ) );
