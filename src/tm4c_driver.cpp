@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <string>
 #include "lynxmotion_tm4c/joint_maps.hpp"
+#include "lynxmotion_tm4c/common.hpp"
 
 namespace lynxmotion_tm4c
 {
@@ -346,13 +347,6 @@ void TM4CDriver::update( )
   last_time = current_time;
 }
 
-
-float lerp(float x, float x_min, float x_max, float y_min, float y_max) {
-  if (x > x_max) { return y_max; }
-  else if (x < x_min) { return y_min; }
-  return y_min + (y_max - y_min)*((x - x_min)/(x_max - x_min));
-}
-
 void TM4CDriver::publishJointStates( )
 {
   for( unsigned int i = 0; i < controllers.size( ); i++ )
@@ -438,17 +432,16 @@ void TM4CDriver::jointCallback( const ros::MessageEvent<trajectory_msgs::JointTr
       if( angle >= joint->properties.min_angle && angle <= joint->properties.max_angle ) {
         cmd[i].ch = joint->properties.channel;
 
-        if (i == 1) {
-          /* cmd[i].pw = (unsigned int)(angle*joint->properties.slope + joint->properties.intercept); */
-          /* cmd[i].pw = (int)interpolator.get(msg->points[0].positions[1] * (180/M_PI), */
-          /*                                   msg->points[0].positions[2] * (180/M_PI), */
-          /*                                   m_shl); */
-          cmd[i].pw = (int)lerp(angle, (10.0*M_PI)/170, M_PI, 831, 2317);
+        if (i == 0) {
+          cmd[i].pw = (int)lerp(angle, 0.0, M_PI, 590, 2390);
+        } else if (i == 1) {
+          cmd[i].pw = (int)lerp(angle, (10.0*M_PI)/180, 170.0*M_PI/180, 831, 2317);
         } else if (i == 2) {
-          /* cmd[i].pw = (int)interpolator.get(msg->points[0].positions[1] * (180/M_PI), */
-          /*                                   msg->points[0].positions[2] * (180/M_PI), */
-          /*                                   m_elb); */
           cmd[i].pw = (int)lerp(angle, (20.0*M_PI)/180, M_PI, 2080, 660);
+        } else if (i == 3) {
+          cmd[i].pw = (int)lerp(angle, (72.4*M_PI)/180, (273.5*M_PI)/180, 450, 2550);
+        } else if (i == 4) {
+          cmd[i].pw = (int)lerp(angle, 0.0, 1.0, 1000, 2400);
         } else {
           cmd[i].pw = (unsigned int)
             (lerp((float)(angle), 0.0 + joint->properties.offset_angle, M_PI, 600.0, 2400.0));
@@ -475,8 +468,7 @@ void TM4CDriver::jointCallback( const ros::MessageEvent<trajectory_msgs::JointTr
     }
   }
 
-  if(!invalid)
-  {
+  if(!invalid) {
     // Send command
     if( !tm4c_dev.move_servo( cmd, num_joints ) )
       ROS_ERROR( "Failed sending joint commands to controller" );

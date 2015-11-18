@@ -10,6 +10,7 @@
 #include <vector>
 #include "tm4c.h"
 #include "bilinear_interpolator.hpp"
+#include "lynxmotion_tm4c/common.hpp"
 
 namespace lynxmotion_tm4c
 {
