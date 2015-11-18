@@ -439,17 +439,19 @@ void TM4CDriver::jointCallback( const ros::MessageEvent<trajectory_msgs::JointTr
         cmd[i].ch = joint->properties.channel;
 
         if (i == 1) {
-          // cmd[i].pw = (unsigned int)(angle*joint->properties.slope + joint->properties.intercept);
-          cmd[i].pw = (int)interpolator.get(msg->points[0].positions[1] * (180/M_PI),
-                                            msg->points[0].positions[2] * (180/M_PI),
-                                            m_shl);
+          /* cmd[i].pw = (unsigned int)(angle*joint->properties.slope + joint->properties.intercept); */
+          /* cmd[i].pw = (int)interpolator.get(msg->points[0].positions[1] * (180/M_PI), */
+          /*                                   msg->points[0].positions[2] * (180/M_PI), */
+          /*                                   m_shl); */
+          cmd[i].pw = (int)lerp(angle, (10.0*M_PI)/170, M_PI, 831, 2317);
         } else if (i == 2) {
-          cmd[i].pw = (int)interpolator.get(msg->points[0].positions[1] * (180/M_PI),
-                                            msg->points[0].positions[2] * (180/M_PI),
-                                            m_elb);
+          /* cmd[i].pw = (int)interpolator.get(msg->points[0].positions[1] * (180/M_PI), */
+          /*                                   msg->points[0].positions[2] * (180/M_PI), */
+          /*                                   m_elb); */
+          cmd[i].pw = (int)lerp(angle, (20.0*M_PI)/180, M_PI, 2080, 660);
         } else {
           cmd[i].pw = (unsigned int)
-            (lerp((float)(angle), 0.0 + joint->properties.offset_angle, 3.14, 600.0, 2400.0));
+            (lerp((float)(angle), 0.0 + joint->properties.offset_angle, M_PI, 600.0, 2400.0));
         }
         ROS_INFO("setting joint %i angle to %i", i, cmd[i].pw);
         /* cmd[i].pw = ( unsigned int )( scale * ( angle - joint->properties.offset_angle ) + 1500 + 0.5 ); */
