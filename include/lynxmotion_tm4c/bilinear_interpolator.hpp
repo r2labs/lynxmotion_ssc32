@@ -3,6 +3,7 @@
 
 #include <map>
 #include <math.h>
+#define DEBUG 1
 #ifdef DEBUG
 #include <iostream>
 #include <numeric>
@@ -43,6 +44,10 @@ public:
         xy[2] = m[x_lower][y_higher];
         xy[3] = m[x_higher][y_higher];
 
+        if (xy[0] == 0 || xy[1] == 0 || xy[2] == 0 || xy[3] == 0) {
+            return (T)barycentric(x, y, x_lower, x_higher, y_lower, y_higher, xy);
+        }
+
         return (T)(bilinear(x, y, x_lower, x_higher, y_lower, y_higher, xy));
     }
 
@@ -53,8 +58,44 @@ private:
         return y_min + (y_max - y_min)*((x - x_min)/(x_max - x_min));
     }
 
+    float barycentric(T x, T y, T x1, T x2, T y1, T y2, T z[4]) {
 
+        /* set up coordinate systems */
+        std::vector<T> xs, ys, zs;
+        if (z[0] != 0) {
+            xs.push_back(x1);
+            ys.push_back(y1);
+            zs.push_back(z[0]);
+        } if (z[1] != 0) {
+            xs.push_back(x2);
+            ys.push_back(y1);
+            zs.push_back(z[1]);
+        } if (z[2] != 0) {
+            xs.push_back(x1);
+            ys.push_back(y2);
+            zs.push_back(z[2]);
+        } if (z[3] != 0) {
+            xs.push_back(x2);
+            ys.push_back(y2);
+            zs.push_back(z[3]);
+        }
 
+        // float area_tot = fabs((xs[0]*(ys[1] - ys[2]) + xs[1]*(ys[2] - ys[0]) + xs[2]*(ys[0] - ys[1]))/2);
+        float area_tot = t_area(xs[0], xs[1], xs[2], ys[0], ys[1], ys[2]);
+        float area_0 = t_area(xs[1], xs[2], x, ys[1], ys[2], y);
+        float area_1 = t_area(xs[0], xs[2], x, ys[0], ys[2], y);
+        float area_2 = t_area(xs[0], xs[1], x, ys[0], ys[1], y);
+
+        float pct_0 = area_0/area_tot;
+        float pct_1 = area_1/area_tot;
+        float pct_2 = area_2/area_tot;
+
+        return ((pct_0 * zs[0]) + (pct_1 * zs[1]) + (pct_2 * zs[2]));
+    }
+
+    float t_area(T x1, T x2, T x3, T y1, T y2, T y3) {
+        return fabs((x1*(y2 - y3) + x2*(y3 - y1) + x3*(y1 - y2))/2);
+    }
 
     float bilinear(T x, T y, T x_lower, T x_higher, T y_lower, T y_higher,
                    float xy[4]) {
