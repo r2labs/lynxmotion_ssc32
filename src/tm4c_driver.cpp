@@ -433,7 +433,7 @@ void TM4CDriver::jointCallback( const ros::MessageEvent<trajectory_msgs::JointTr
         cmd[i].ch = joint->properties.channel;
 
         if (i == 0) {
-          cmd[i].pw = (int)lerp(angle, 0.0, M_PI, 590, 2390);
+          cmd[i].pw = (int)lerp(angle, 0.0, M_PI, 594, 2394);
         } else if (i == 1) {
           cmd[i].pw = (int)lerp(angle, (10.0*M_PI)/180, 170.0*M_PI/180, 831, 2317);
         } else if (i == 2) {
@@ -446,7 +446,7 @@ void TM4CDriver::jointCallback( const ros::MessageEvent<trajectory_msgs::JointTr
           cmd[i].pw = (unsigned int)
             (lerp((float)(angle), 0.0 + joint->properties.offset_angle, M_PI, 600.0, 2400.0));
         }
-        ROS_INFO("setting joint %i angle to %i", i, cmd[i].pw);
+        // ROS_INFO("setting joint %i angle to %i", i, cmd[i].pw);
         /* cmd[i].pw = ( unsigned int )( scale * ( angle - joint->properties.offset_angle ) + 1500 + 0.5 ); */
         if( joint->properties.invert )
           cmd[i].pw = 3000 - cmd[i].pw;
