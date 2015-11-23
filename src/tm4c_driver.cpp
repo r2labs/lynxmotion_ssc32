@@ -392,10 +392,12 @@ void TM4CDriver::jointCallback( const ros::MessageEvent<trajectory_msgs::JointTr
 
   std::string topic = connection_header["topic"];
 
-  if( topic.empty() ) {
-    ROS_ERROR( "The connection header topic is empty" );
-    return;
-  }
+ // if( topic.empty() ) {
+ //   ROS_ERROR( "The connection header topic is empty" );
+ //   return;
+ // }
+
+topic = "tm4c";
 
   // Remove beginning '/'
   if( topic[0] == '/')
