@@ -274,7 +274,7 @@ bool TM4CDriver::spin( )
     // if (tm4c_dev.open_port(port.c_str(), baud)) {
         // ROS_INFO( "HERSHAL: Spinning..." );
 
-        ros::Rate loop_rate(10);
+        ros::Rate loop_rate(5);
         while(ros::ok()) {
             update();
             // std::string message = "test\r\n";
@@ -313,7 +313,7 @@ bool TM4CDriver::start( )
   // Subscribe and advertise for every controller
   for( unsigned int i = 0; i < controllers.size( ); i++ )
   {
-    joint_state_pubs_map[controllers[i]->name] = nh.advertise<sensor_msgs::JointState>( controllers[i]->name + "/joint_states", 1 );
+    joint_state_pubs_map[controllers[i]->name] = nh.advertise<sensor_msgs::JointState>( controllers[i]->name + "/joint_states", 10);
     joint_subs.push_back( nh.subscribe( controllers[i]->name + "/command", 1, &TM4CDriver::jointCallback, this ) );
   }
 

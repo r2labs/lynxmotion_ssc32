@@ -4,7 +4,7 @@
 #include <string>
 
 #ifndef DEBUG
-// #define DEBUG 1
+#define DEBUG 1
 #endif
 
 namespace lynxmotion_tm4c
@@ -97,17 +97,17 @@ bool TM4C::send_message(const char *msg, int size) {
     if(fd != -1) {
       tcflush(fd, TCIOFLUSH);
 
-#if DEBUG
-      /* printf("INFO: [send_message] Sending message: "); */
-      for(unsigned int i = 0; i < strlen(msg); i++) {
-        switch(msg[i]) {
-        case '\r': printf("<cr>"); break;
-        case 27:   printf("<esc>"); break;
-        default:   printf("%c", msg[i]); break;
-        }
-      }
-      printf("\n");
-#endif
+// #if DEBUG
+//       /* printf("INFO: [send_message] Sending message: "); */
+//       for(unsigned int i = 0; i < strlen(msg); i++) {
+//         switch(msg[i]) {
+//         case '\r': printf("<cr>"); break;
+//         case 27:   printf("<esc>"); break;
+//         default:   printf("%c", msg[i]); break;
+//         }
+//       }
+//       printf("\n");
+// #endif
 
       int n = 0;
       while (n < size) {
